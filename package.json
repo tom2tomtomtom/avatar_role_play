@@ -1,8 +1,8 @@
 {
-  "name": "counseling-roleplay-avatar",
+  "name": "ai-conversation-partner",
   "version": "1.0.0",
   "type": "module",
-  "description": "Counseling roleplay application with HeyGen Interactive Avatar and Claude AI",
+  "description": "AI conversation partner application with HeyGen Interactive Avatar and Claude AI",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

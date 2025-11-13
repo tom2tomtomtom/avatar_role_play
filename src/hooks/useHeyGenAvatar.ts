@@ -48,26 +48,26 @@ export const useHeyGenAvatar = (apiKey: string): UseHeyGenAvatarReturn => {
       // Pass event callbacks to initialize - they'll be set up BEFORE the session starts
       await serviceRef.current.initialize(config, {
         onReady: () => {
-          console.log('Avatar stream is ready');
+          console.log('✅ Avatar stream is ready');
           setIsConnected(true);
           setIsLoading(false);
           const video = serviceRef.current?.getVideoElement();
           if (video) {
-            console.log('Video element retrieved');
+            console.log('✅ Video element retrieved');
             setVideoElement(video);
           }
         },
         onDisconnected: () => {
-          console.log('Avatar stream disconnected');
+          console.log('🔴 Avatar stream disconnected');
           setIsConnected(false);
           setIsSpeaking(false);
         },
         onStartTalking: () => {
-          console.log('Avatar started talking');
+          console.log('🗣️ Avatar started talking');
           setIsSpeaking(true);
         },
         onStopTalking: () => {
-          console.log('Avatar stopped talking');
+          console.log('🤐 Avatar stopped talking');
           setIsSpeaking(false);
         },
       });
@@ -88,7 +88,8 @@ export const useHeyGenAvatar = (apiKey: string): UseHeyGenAvatarReturn => {
     }
 
     try {
-      await serviceRef.current.speak(text);
+      // Use REPEAT mode to prevent avatar AI from generating its own responses
+      await serviceRef.current.speak(text, 'repeat' as any);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to speak';
       setError(errorMessage);

@@ -8,12 +8,26 @@ export const WebcamView: React.FC<WebcamViewProps> = ({ onVideoReady }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const streamInitializedRef = useRef(false);
+  const onVideoReadyRef = useRef(onVideoReady);
+
+  // Keep ref up to date
+  useEffect(() => {
+    onVideoReadyRef.current = onVideoReady;
+  }, [onVideoReady]);
 
   useEffect(() => {
+    // Only initialize once
+    if (streamInitializedRef.current) {
+      console.log('📹 Webcam already initialized, skipping...');
+      return;
+    }
+
     let stream: MediaStream | null = null;
 
     const initializeWebcam = async () => {
       try {
+        console.log('📹 Initializing webcam...');
         stream = await navigator.mediaDevices.getUserMedia({
           video: { width: 1280, height: 720 },
           audio: false, // Audio is handled separately for recording
@@ -24,10 +38,12 @@ export const WebcamView: React.FC<WebcamViewProps> = ({ onVideoReady }) => {
           videoRef.current.onloadedmetadata = () => {
             videoRef.current?.play();
             setIsLoading(false);
-            if (onVideoReady && videoRef.current) {
-              onVideoReady(videoRef.current);
+            console.log('✅ Webcam initialized and playing');
+            if (onVideoReadyRef.current && videoRef.current) {
+              onVideoReadyRef.current(videoRef.current);
             }
           };
+          streamInitializedRef.current = true;
         }
       } catch (err) {
         console.error('Failed to access webcam:', err);
@@ -41,15 +57,17 @@ export const WebcamView: React.FC<WebcamViewProps> = ({ onVideoReady }) => {
     // Cleanup
     return () => {
       if (stream) {
+        console.log('🛑 Cleaning up webcam stream');
         stream.getTracks().forEach((track) => track.stop());
+        streamInitializedRef.current = false;
       }
     };
-  }, [onVideoReady]);
+  }, []); // Empty array - only run once!
 
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h3 style={styles.title}>Counselor (You)</h3>
+        <h3 style={styles.title}>You</h3>
       </div>
       <div style={styles.videoContainer}>
         {isLoading && (

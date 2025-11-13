@@ -73,6 +73,7 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
       }
 
       if (finalText) {
+        console.log('Final speech transcript:', finalText);
         setTranscript((prev) => prev + finalText);
         setInterimTranscript('');
       } else {

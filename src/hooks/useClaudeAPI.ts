@@ -34,6 +34,7 @@ export const useClaudeAPI = (
       throw new Error('Claude service not initialized');
     }
 
+    console.log('🔵 Claude: Sending message:', content);
     setIsProcessing(true);
     setError(null);
 
@@ -48,7 +49,9 @@ export const useClaudeAPI = (
       setMessages((prev) => [...prev, counselorMessage]);
 
       // Get Claude response (as client)
+      console.log('🔵 Claude: Calling Claude API...');
       const response = await serviceRef.current.sendMessage(content);
+      console.log('🔵 Claude: Response received:', response);
 
       // Add client response to local state
       const clientMessage: Message = {
@@ -63,6 +66,7 @@ export const useClaudeAPI = (
       return response;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to get response';
+      console.error('🔴 Claude: Error:', errorMessage);
       setError(errorMessage);
       setIsProcessing(false);
       throw err;

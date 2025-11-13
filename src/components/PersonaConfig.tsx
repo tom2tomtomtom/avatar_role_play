@@ -36,7 +36,7 @@ export const PersonaConfig: React.FC<PersonaConfigProps> = ({
         onClick={() => setIsExpanded(!isExpanded)}
         disabled={disabled}
       >
-        {isExpanded ? '▼' : '▶'} Client Persona Configuration
+        {isExpanded ? '▼' : '▶'} Conversation Partner Setup
       </button>
 
       {isExpanded && (
@@ -75,11 +75,11 @@ export const PersonaConfig: React.FC<PersonaConfigProps> = ({
           </div>
 
           <div style={styles.formGroup}>
-            <label style={styles.label}>Presenting Issue:</label>
+            <label style={styles.label}>Interests:</label>
             <textarea
               style={styles.textarea}
-              value={persona.presentingIssue}
-              onChange={(e) => handleChange('presentingIssue', e.target.value)}
+              value={persona.interests}
+              onChange={(e) => handleChange('interests', e.target.value)}
               disabled={disabled}
               rows={2}
             />

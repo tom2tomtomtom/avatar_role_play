@@ -9,6 +9,7 @@ export class HeyGenService {
   private avatar: InstanceType<typeof StreamingAvatar> | null = null;
   private apiKey: string;
   private sessionId: string | null = null;
+  private videoElement: HTMLVideoElement | null = null;
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
@@ -68,6 +69,12 @@ export class HeyGenService {
         avatarName: String(config.avatarId),
         quality: config.quality as AvatarQuality,
         language: 'en',
+        // Explicitly disable ALL interactive features
+        disableIdleTimeout: true,
+        useSilencePrompt: false,
+        // Try to disable knowledge base / AI responses
+        knowledgeBase: null,
+        knowledgeId: null,
       };
       
       // Only add voice if voiceId is provided and not 'default_voice'
@@ -85,6 +92,17 @@ export class HeyGenService {
 
       console.log('Avatar session created:', sessionData);
       this.sessionId = sessionData.session_id;
+      
+      // CRITICAL: Close voice chat if it was auto-started
+      if (this.avatar) {
+        try {
+          console.log('⚠️ Attempting to close voice chat to prevent auto-responses...');
+          await this.avatar.closeVoiceChat();
+          console.log('✅ Voice chat closed - avatar will only speak our text');
+        } catch (e) {
+          console.log('ℹ️ Voice chat was not active or already closed');
+        }
+      }
     } catch (error: any) {
       console.error('Failed to initialize HeyGen avatar:', error);
       const errorDetails = {
@@ -105,13 +123,34 @@ export class HeyGenService {
       throw new Error('Avatar not initialized');
     }
 
+    // Strip stage directions and formatting that can't be spoken
+    // Remove text between asterisks (e.g., *shifts in chair*)
+    let cleanText = text.replace(/\*[^*]+\*/g, '').trim();
+    // Remove multiple spaces/newlines
+    cleanText = cleanText.replace(/\s+/g, ' ').trim();
+    
+    console.log('🎤 Avatar: Original text:', text.substring(0, 100) + (text.length > 100 ? '...' : ''));
+    console.log('🎤 Avatar: Cleaned text:', cleanText.substring(0, 100) + (cleanText.length > 100 ? '...' : ''));
+    console.log('🎤 Avatar: Text length:', cleanText.length, 'characters');
+    console.log('🎤 Avatar: TaskType:', taskType);
+    
+    if (!cleanText || cleanText.length === 0) {
+      console.warn('⚠️ No speakable text after cleaning, skipping speak command');
+      return;
+    }
+    
     try {
-      await this.avatar.speak({
-        text,
+      const speakRequest = {
+        text: cleanText,
         taskType,
-      });
+      };
+      console.log('🎤 Avatar: Sending speak request:', speakRequest);
+      
+      const result = await this.avatar.speak(speakRequest);
+      console.log('🎤 Avatar: Speak result:', result);
+      console.log('🎤 Avatar: Speak command sent successfully');
     } catch (error) {
-      console.error('Failed to make avatar speak:', error);
+      console.error('🔴 Avatar: Failed to make avatar speak:', error);
       throw new Error(`Avatar speak failed: ${error}`);
     }
   }
@@ -148,13 +187,22 @@ export class HeyGenService {
       return null;
     }
 
-    // Create a video element and attach the media stream
-    const video = document.createElement('video');
-    video.srcObject = this.avatar.mediaStream;
-    video.autoplay = true;
-    video.playsInline = true;
+    // Create video element only once and cache it
+    if (!this.videoElement) {
+      this.videoElement = document.createElement('video');
+      this.videoElement.autoplay = true;
+      this.videoElement.playsInline = true;
+      this.videoElement.muted = false; // Ensure avatar audio is not muted
+      console.log('Video element created');
+    }
     
-    return video;
+    // Update the media stream
+    if (this.videoElement.srcObject !== this.avatar.mediaStream) {
+      this.videoElement.srcObject = this.avatar.mediaStream;
+      console.log('Media stream attached to video element');
+    }
+    
+    return this.videoElement;
   }
 
   async close(): Promise<void> {
@@ -166,6 +214,7 @@ export class HeyGenService {
       await this.avatar.stopAvatar();
       this.avatar = null;
       this.sessionId = null;
+      this.videoElement = null; // Clear cached video element
     } catch (error) {
       console.error('Failed to close avatar session:', error);
       throw error;

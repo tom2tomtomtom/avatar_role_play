@@ -85,17 +85,56 @@ function App() {
     };
   }, [isSessionActive]);
 
-  // Handle speech recognition results
+  // Handle speech recognition results (only when avatar is NOT speaking)
   useEffect(() => {
-    if (speech.transcript && isSessionActive) {
-      handleCounselorMessage(speech.transcript);
+    if (speech.transcript && isSessionActive && !avatar.isSpeaking) {
+      console.log('Speech recognized:', speech.transcript);
+      handleUserMessage(speech.transcript);
       speech.resetTranscript();
+    } else if (speech.transcript && avatar.isSpeaking) {
+      console.log('Ignoring speech while avatar is speaking:', speech.transcript);
+      speech.resetTranscript(); // Clear it to prevent processing later
     }
-  }, [speech.transcript, isSessionActive]);
+  }, [speech.transcript, isSessionActive, avatar.isSpeaking]);
+  
+  // Auto-manage speech recognition based on session and avatar state
+  useEffect(() => {
+    if (!isSessionActive) {
+      // Session not active - stop listening
+      if (speech.isListening) {
+        console.log('🎤 Session ended - stopping speech recognition');
+        speech.stopListening();
+      }
+      return;
+    }
+
+    // Session is active
+    if (avatar.isSpeaking) {
+      // Avatar is speaking - pause listening to avoid feedback
+      if (speech.isListening) {
+        console.log('🤐 Avatar speaking - pausing speech recognition');
+        speech.stopListening();
+      }
+    } else {
+      // Avatar not speaking - start/resume listening
+      if (!speech.isListening && avatar.isConnected) {
+        console.log('🎤 Auto-starting speech recognition');
+        speech.startListening();
+      }
+    }
+  }, [isSessionActive, avatar.isSpeaking, avatar.isConnected, speech.isListening]);
 
   // Start session
   const handleStartSession = useCallback(async () => {
+    // Prevent multiple session creation
+    if (isSessionActive || avatar.isLoading) {
+      console.log('Session already active or loading, ignoring duplicate start request');
+      return;
+    }
+    
     try {
+      console.log('Starting new session...');
+      
       // Initialize avatar
       await avatar.initialize(DEFAULT_AVATAR_CONFIG);
 
@@ -104,21 +143,20 @@ function App() {
 
       setIsSessionActive(true);
       setSessionDuration(0);
+      
+      console.log('Session started successfully');
     } catch (error) {
       console.error('Failed to start session:', error);
       alert('Failed to start session. Please check your API keys and try again.');
     }
-  }, [currentPersona]);
+  }, [currentPersona, isSessionActive, avatar.isLoading]);
 
   // End session
   const handleEndSession = useCallback(async () => {
     setIsSessionActive(false);
 
-    // Stop listening
-    if (speech.isListening) {
-      speech.stopListening();
-    }
-
+    // Speech recognition will auto-stop via useEffect
+    
     // Stop recording if active
     if (recording.isRecording) {
       await recording.stopRecording();
@@ -131,19 +169,26 @@ function App() {
     claude.clearMessages();
   }, [speech.isListening, recording.isRecording]);
 
-  // Handle counselor message
-  const handleCounselorMessage = useCallback(
+  // Handle user message
+  const handleUserMessage = useCallback(
     async (message: string) => {
       if (!message.trim() || !isSessionActive) return;
 
+      console.log('🎯 Processing user message:', message);
+
       try {
-        // Send to Claude and get client response
-        const clientResponse = await claude.sendMessage(message);
+        // Send to Claude and get response
+        console.log('📤 Sending to Claude...');
+        const response = await claude.sendMessage(message);
+        console.log('📥 Claude response received:', response.substring(0, 200) + '...');
+        console.log('📊 Response length:', response.length, 'characters');
 
         // Make avatar speak the response
-        await avatar.speak(clientResponse);
+        console.log('🎤 Sending text to avatar to speak...');
+        await avatar.speak(response);
+        console.log('✅ Avatar.speak() completed');
       } catch (error) {
-        console.error('Failed to process message:', error);
+        console.error('❌ Failed to process message:', error);
       }
     },
     [isSessionActive, claude, avatar]
@@ -189,8 +234,8 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Counseling Roleplay with Interactive Avatar</h1>
-        <p>Practice counseling skills with an AI-powered client avatar</p>
+        <h1>AI Conversation Partner</h1>
+        <p>Have natural conversations with an AI-powered avatar</p>
       </header>
 
       <main className="app-main">
@@ -225,8 +270,6 @@ function App() {
             onEndSession={handleEndSession}
             onStartRecording={handleStartRecording}
             onStopRecording={handleStopRecording}
-            onStartListening={speech.startListening}
-            onStopListening={speech.stopListening}
             onDownloadRecording={handleDownloadRecording}
             hasRecording={recording.recordedBlob !== null}
           />

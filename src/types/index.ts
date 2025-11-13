@@ -1,9 +1,9 @@
-// Client Persona Configuration
+// Conversation Partner Configuration
 export interface ClientPersona {
   name: string;
   age: number;
   occupation: string;
-  presentingIssue: string;
+  interests: string;
   background: string;
   communicationStyle: string;
 }
@@ -37,7 +37,7 @@ export interface AvatarConfig {
 // Conversation Message
 export interface Message {
   id: string;
-  role: 'counselor' | 'client';
+  role: 'user' | 'assistant';
   content: string;
   timestamp: number;
 }

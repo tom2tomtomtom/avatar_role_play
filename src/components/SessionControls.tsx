@@ -9,8 +9,6 @@ interface SessionControlsProps {
   onEndSession: () => void;
   onStartRecording: () => void;
   onStopRecording: () => void;
-  onStartListening: () => void;
-  onStopListening: () => void;
   onDownloadRecording: () => void;
   hasRecording: boolean;
 }
@@ -24,8 +22,6 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
   onEndSession,
   onStartRecording,
   onStopRecording,
-  onStartListening,
-  onStopListening,
   onDownloadRecording,
   hasRecording,
 }) => {
@@ -43,12 +39,20 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
           <span style={styles.timerLabel}>Session Time:</span>
           <span style={styles.timerValue}>{formatDuration(sessionDuration)}</span>
         </div>
-        {isRecording && (
-          <div style={styles.recordingIndicator}>
-            <span style={styles.recordingDot}>●</span>
-            <span>Recording</span>
-          </div>
-        )}
+        <div style={styles.statusIndicators}>
+          {isListening && (
+            <div style={styles.listeningIndicator}>
+              <span style={styles.listeningDot}>●</span>
+              <span>Listening</span>
+            </div>
+          )}
+          {isRecording && (
+            <div style={styles.recordingIndicator}>
+              <span style={styles.recordingDot}>●</span>
+              <span>Recording</span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div style={styles.controlsSection}>
@@ -86,25 +90,13 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
           )}
         </div>
 
-        <div style={styles.buttonGroup}>
-          {!isListening ? (
-            <button
-              style={styles.button}
-              onClick={onStartListening}
-              disabled={!isSessionActive}
-            >
-              Start Listening
-            </button>
-          ) : (
-            <button
-              style={{...styles.button, ...styles.listeningButton}}
-              onClick={onStopListening}
-            >
-              Stop Listening
-            </button>
-          )}
-        </div>
       </div>
+      
+      {isSessionActive && (
+        <div style={styles.helpText}>
+          💡 Microphone is automatically managed - speak anytime the avatar isn't talking
+        </div>
+      )}
     </div>
   );
 };
@@ -139,6 +131,22 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     fontFamily: 'monospace',
   },
+  statusIndicators: {
+    display: 'flex',
+    gap: '16px',
+  },
+  listeningIndicator: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    color: '#10b981',
+    fontSize: '14px',
+    fontWeight: 500,
+  },
+  listeningDot: {
+    fontSize: '20px',
+    animation: 'pulse 1s ease-in-out infinite',
+  },
   recordingIndicator: {
     display: 'flex',
     alignItems: 'center',
@@ -150,6 +158,15 @@ const styles: Record<string, React.CSSProperties> = {
   recordingDot: {
     fontSize: '20px',
     animation: 'pulse 1s ease-in-out infinite',
+  },
+  helpText: {
+    marginTop: '16px',
+    padding: '12px',
+    backgroundColor: '#2a2a2a',
+    borderRadius: '6px',
+    color: '#aaa',
+    fontSize: '13px',
+    textAlign: 'center',
   },
   controlsSection: {
     display: 'flex',
@@ -195,9 +212,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
   recordButton: {
     backgroundColor: '#dc2626',
-  },
-  listeningButton: {
-    backgroundColor: '#10b981',
   },
 };
 
