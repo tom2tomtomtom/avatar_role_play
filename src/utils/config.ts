@@ -40,26 +40,40 @@ export const API_CONFIG = {
     baseUrl: 'https://api.heygen.com/v1',
     streamingUrl: 'wss://api.heygen.com/v1/streaming'
   },
+  groq: {
+    model: 'llama-3.3-70b-versatile', // Ultra-fast, high quality
+    maxTokens: 300,
+    temperature: 0.9
+  },
   claude: {
-    model: 'claude-3-5-haiku-20241022', // Faster model for real-time conversations
-    maxTokens: 300, // Flexible length for context-appropriate responses
-    temperature: 0.9 // Higher for more spontaneous, natural replies
+    model: 'claude-3-5-haiku-20241022', // Fallback option
+    maxTokens: 300,
+    temperature: 0.9
   }
 };
 
 // Environment helpers
 export const getApiKeys = () => {
   const heygenApiKey = import.meta.env.VITE_HEYGEN_API_KEY;
+  const groqApiKey = import.meta.env.VITE_GROQ_API_KEY;
   const claudeApiKey = import.meta.env.VITE_CLAUDE_API_KEY;
 
-  if (!heygenApiKey || !claudeApiKey) {
+  if (!heygenApiKey) {
+    throw new Error('Missing VITE_HEYGEN_API_KEY in .env file');
+  }
+
+  // Prefer Groq, fallback to Claude
+  if (!groqApiKey && !claudeApiKey) {
     throw new Error(
-      'Missing required API keys. Please check your .env file and ensure ' +
-      'VITE_HEYGEN_API_KEY and VITE_CLAUDE_API_KEY are set.'
+      'Missing AI API key. Please set either VITE_GROQ_API_KEY or VITE_CLAUDE_API_KEY in .env file'
     );
   }
 
-  return { heygenApiKey, claudeApiKey };
+  return { 
+    heygenApiKey, 
+    groqApiKey: groqApiKey || '',
+    claudeApiKey: claudeApiKey || ''
+  };
 };
 
 // System prompt for Claude to maintain conversation partner persona

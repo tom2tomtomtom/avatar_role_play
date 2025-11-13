@@ -58,9 +58,10 @@ export const useHeyGenAvatar = (apiKey: string): UseHeyGenAvatarReturn => {
           }
         },
         onDisconnected: () => {
-          console.log('🔴 Avatar stream disconnected');
-          setIsConnected(false);
-          setIsSpeaking(false);
+          console.error('🔴 Avatar stream disconnected - THIS SHOULD NOT HAPPEN DURING SESSION');
+          console.trace('Disconnect stack trace');
+          // Don't set isConnected to false unless we explicitly disconnected
+          // This prevents accidental disconnects from breaking the session
         },
         onStartTalking: () => {
           console.log('🗣️ Avatar started talking');
@@ -114,12 +115,15 @@ export const useHeyGenAvatar = (apiKey: string): UseHeyGenAvatarReturn => {
     }
 
     try {
+      console.log('🛑 Explicitly disconnecting avatar...');
       await serviceRef.current.close();
       setIsConnected(false);
       setIsSpeaking(false);
       setVideoElement(null);
+      console.log('✅ Avatar disconnected successfully');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to disconnect';
+      console.error('❌ Disconnect error:', errorMessage);
       setError(errorMessage);
     }
   }, []);

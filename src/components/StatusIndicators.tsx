@@ -65,15 +65,15 @@ export const StatusIndicators: React.FC<StatusIndicatorsProps> = ({ status }) =>
       </div>
 
       <div style={styles.statusItem}>
-        <span style={styles.label}>Claude:</span>
+        <span style={styles.label}>AI:</span>
         <div style={styles.statusBadge}>
           <span
             style={{
               ...styles.statusDot,
-              backgroundColor: getStatusColor(status.claude),
+              backgroundColor: getStatusColor(status.ai),
             }}
           />
-          <span style={styles.statusText}>{getStatusText(status.claude)}</span>
+          <span style={styles.statusText}>{getStatusText(status.ai)}</span>
         </div>
       </div>
 

@@ -19,7 +19,7 @@ export interface SessionState {
 // API Connection Status
 export interface ConnectionStatus {
   heygen: 'connected' | 'connecting' | 'disconnected' | 'error';
-  claude: 'connected' | 'connecting' | 'disconnected' | 'error';
+  ai: 'connected' | 'connecting' | 'disconnected' | 'error';
   speech: 'ready' | 'listening' | 'error' | 'not-supported';
 }
 

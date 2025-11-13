@@ -5,7 +5,7 @@ import SessionControls from './components/SessionControls';
 import StatusIndicators from './components/StatusIndicators';
 import PersonaConfig from './components/PersonaConfig';
 import { useHeyGenAvatar } from './hooks/useHeyGenAvatar';
-import { useClaudeAPI } from './hooks/useClaudeAPI';
+import { useAIChat } from './hooks/useAIChat';
 import { useSpeechRecognition } from './hooks/useSpeechRecognition';
 import { useSessionRecording } from './hooks/useSessionRecording';
 import { ClientPersona, ConnectionStatus } from './types';
@@ -14,7 +14,7 @@ import './App.css';
 
 function App() {
   // Get API keys
-  const { heygenApiKey, claudeApiKey } = getApiKeys();
+  const { heygenApiKey, groqApiKey, claudeApiKey } = getApiKeys();
 
   // State
   const [currentPersona, setCurrentPersona] = useState<ClientPersona>(DEFAULT_PERSONA);
@@ -22,7 +22,7 @@ function App() {
   const [sessionDuration, setSessionDuration] = useState(0);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
     heygen: 'disconnected',
-    claude: 'disconnected',
+    ai: 'disconnected',
     speech: 'ready',
   });
 
@@ -32,7 +32,7 @@ function App() {
 
   // Hooks
   const avatar = useHeyGenAvatar(heygenApiKey);
-  const claude = useClaudeAPI(claudeApiKey, currentPersona);
+  const ai = useAIChat(groqApiKey, claudeApiKey, currentPersona);
   const speech = useSpeechRecognition();
   const recording = useSessionRecording();
 
@@ -46,9 +46,9 @@ function App() {
         : avatar.error
         ? 'error'
         : 'disconnected',
-      claude: claude.isProcessing
+      ai: ai.isProcessing
         ? 'connecting'
-        : claude.error
+        : ai.error
         ? 'error'
         : 'connected',
       speech: speech.error
@@ -63,8 +63,8 @@ function App() {
     avatar.isLoading,
     avatar.isConnected,
     avatar.error,
-    claude.isProcessing,
-    claude.error,
+    ai.isProcessing,
+    ai.error,
     speech.error,
     speech.isSupported,
     speech.isListening,
@@ -138,8 +138,8 @@ function App() {
       // Initialize avatar
       await avatar.initialize(DEFAULT_AVATAR_CONFIG);
 
-      // Reset Claude session with current persona
-      claude.resetSession(currentPersona);
+      // Reset AI session with current persona
+      ai.resetSession(currentPersona);
 
       setIsSessionActive(true);
       setSessionDuration(0);
@@ -166,7 +166,7 @@ function App() {
     await avatar.disconnect();
 
     // Clear messages
-    claude.clearMessages();
+    ai.clearMessages();
   }, [speech.isListening, recording.isRecording]);
 
   // Handle user message
@@ -177,10 +177,10 @@ function App() {
       console.log('🎯 Processing user message:', message);
 
       try {
-        // Send to Claude and get response
-        console.log('📤 Sending to Claude...');
-        const response = await claude.sendMessage(message);
-        console.log('📥 Claude response received:', response.substring(0, 200) + '...');
+        // Send to AI and get response
+        console.log(`📤 Sending to ${ai.aiProvider.toUpperCase()}...`);
+        const response = await ai.sendMessage(message);
+        console.log(`📥 ${ai.aiProvider.toUpperCase()} response received:`, response.substring(0, 200) + '...');
         console.log('📊 Response length:', response.length, 'characters');
 
         // Make avatar speak the response
@@ -191,7 +191,7 @@ function App() {
         console.error('❌ Failed to process message:', error);
       }
     },
-    [isSessionActive, claude, avatar]
+    [isSessionActive, ai, avatar]
   );
 
   // Recording controls
@@ -227,7 +227,7 @@ function App() {
   const handlePersonaChange = useCallback((newPersona: ClientPersona) => {
     setCurrentPersona(newPersona);
     if (isSessionActive) {
-      claude.resetSession(newPersona);
+      ai.resetSession(newPersona);
     }
   }, [isSessionActive]);
 
@@ -275,10 +275,10 @@ function App() {
           />
         </div>
 
-        {(avatar.error || claude.error || speech.error || recording.error) && (
+        {(avatar.error || ai.error || speech.error || recording.error) && (
           <div className="error-section">
             {avatar.error && <div className="error-message">Avatar: {avatar.error}</div>}
-            {claude.error && <div className="error-message">Claude: {claude.error}</div>}
+            {ai.error && <div className="error-message">AI ({ai.aiProvider}): {ai.error}</div>}
             {speech.error && <div className="error-message">Speech: {speech.error}</div>}
             {recording.error && <div className="error-message">Recording: {recording.error}</div>}
           </div>

@@ -18,14 +18,20 @@ export const AvatarView: React.FC<AvatarViewProps> = ({
   const currentVideoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
-    console.log('AvatarView effect:', { 
-      hasVideo: !!videoElement, 
-      isConnected, 
-      attached: videoAttachedRef.current,
-      sameVideo: currentVideoRef.current === videoElement
-    });
+    // Only log significant state changes
+    const shouldLog = videoElement !== currentVideoRef.current || 
+                      (isConnected !== undefined && videoAttachedRef.current !== isConnected);
     
-    // Only attach if we have a NEW video element
+    if (shouldLog) {
+      console.log('AvatarView state change:', { 
+        hasVideo: !!videoElement, 
+        isConnected, 
+        attached: videoAttachedRef.current,
+        sameVideo: currentVideoRef.current === videoElement
+      });
+    }
+    
+    // Only attach if we have a NEW video element and we're connected
     if (videoElement && containerRef.current && isConnected && 
         !videoAttachedRef.current && currentVideoRef.current !== videoElement) {
       // Clear container only once
@@ -40,25 +46,18 @@ export const AvatarView: React.FC<AvatarViewProps> = ({
       // Add background to cover green screen
       containerRef.current.style.background = 'linear-gradient(135deg, #2c3e50 0%, #3498db 100%)';
       
-      // Optional: Try to remove green screen using CSS filter (experimental)
-      // videoElement.style.filter = 'saturate(0.8)';
-      
       currentVideoRef.current = videoElement;
       videoAttachedRef.current = true;
       
-      console.log('✅ Video element attached');
+      console.log('✅ Video element attached to DOM');
 
       if (onVideoReady) {
         onVideoReady(videoElement);
       }
     }
     
-    // Clean up on disconnect
-    if (!isConnected && videoAttachedRef.current) {
-      videoAttachedRef.current = false;
-      currentVideoRef.current = null;
-      console.log('🔴 Video detached due to disconnect');
-    }
+    // ONLY clean up if we explicitly disconnected (not on random disconnect events)
+    // This prevents flickering from spurious disconnect events
   }, [videoElement, isConnected, onVideoReady]);
 
   return (
