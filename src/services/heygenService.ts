@@ -15,11 +15,32 @@ export class HeyGenService {
     this.apiKey = apiKey;
   }
 
+  private async getAccessToken(): Promise<string> {
+    const response = await fetch('https://api.heygen.com/v1/streaming.create_token', {
+      method: 'POST',
+      headers: {
+        'x-api-key': this.apiKey,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to get access token: ${response.statusText} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    return data.data.token;
+  }
+
   async initialize(config: AvatarConfig): Promise<void> {
     try {
-      this.avatar = new StreamingAvatar({ apiKey: this.apiKey });
+      // Get access token first
+      const token = await this.getAccessToken();
+      
+      // Initialize avatar with token
+      this.avatar = new StreamingAvatar({ token });
 
-      // Create a new session
+      // Create and start avatar session
       const sessionData = await this.avatar.createStartAvatar({
         avatarName: config.avatarId,
         quality: config.quality as AvatarQuality,
@@ -30,7 +51,7 @@ export class HeyGenService {
         },
       });
 
-      this.sessionId = sessionData.sessionId;
+      this.sessionId = sessionData.session_id;
     } catch (error) {
       console.error('Failed to initialize HeyGen avatar:', error);
       throw new Error(`HeyGen initialization failed: ${error}`);
@@ -81,11 +102,17 @@ export class HeyGenService {
   }
 
   getVideoElement(): HTMLVideoElement | null {
-    if (!this.avatar) {
+    if (!this.avatar || !this.avatar.mediaStream) {
       return null;
     }
-    // The SDK provides access to the video element
-    return this.avatar.videoElement || null;
+
+    // Create a video element and attach the media stream
+    const video = document.createElement('video');
+    video.srcObject = this.avatar.mediaStream;
+    video.autoplay = true;
+    video.playsInline = true;
+    
+    return video;
   }
 
   async close(): Promise<void> {

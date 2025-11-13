@@ -16,9 +16,9 @@ export const DEFAULT_PERSONA: ClientPersona = {
 
 // Default avatar configuration
 export const DEFAULT_AVATAR_CONFIG: AvatarConfig = {
-  avatarId: process.env.VITE_HEYGEN_AVATAR_ID || 'default_avatar',
+  avatarId: import.meta.env.VITE_HEYGEN_AVATAR_ID || 'default_avatar',
   voice: {
-    voiceId: process.env.VITE_HEYGEN_VOICE_ID || 'default_voice',
+    voiceId: import.meta.env.VITE_HEYGEN_VOICE_ID || 'default_voice',
     rate: 1.0,
     emotion: 'friendly'
   },
