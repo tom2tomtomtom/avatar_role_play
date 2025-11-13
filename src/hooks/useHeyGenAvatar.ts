@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { StreamingEvents } from '@heygen/streaming-avatar';
 import HeyGenService from '../services/heygenService';
 import { AvatarConfig } from '../types';
 
@@ -46,40 +45,36 @@ export const useHeyGenAvatar = (apiKey: string): UseHeyGenAvatarReturn => {
     setError(null);
 
     try {
-      await serviceRef.current.initialize(config);
-
-      // Set up event listeners
-      serviceRef.current.on(StreamingEvents.STREAM_READY, () => {
-        setIsConnected(true);
-        setIsLoading(false);
-        const video = serviceRef.current?.getVideoElement();
-        if (video) {
-          setVideoElement(video);
-        }
-      });
-
-      serviceRef.current.on(StreamingEvents.STREAM_DISCONNECTED, () => {
-        setIsConnected(false);
-        setIsSpeaking(false);
-      });
-
-      serviceRef.current.on(StreamingEvents.AVATAR_START_TALKING, () => {
-        setIsSpeaking(true);
-      });
-
-      serviceRef.current.on(StreamingEvents.AVATAR_STOP_TALKING, () => {
-        setIsSpeaking(false);
-      });
-
-      serviceRef.current.on(StreamingEvents.STREAM_ERROR, (error: Error) => {
-        console.error('Stream error:', error);
-        setError(error.message);
-        setIsConnected(false);
-        setIsLoading(false);
+      // Pass event callbacks to initialize - they'll be set up BEFORE the session starts
+      await serviceRef.current.initialize(config, {
+        onReady: () => {
+          console.log('Avatar stream is ready');
+          setIsConnected(true);
+          setIsLoading(false);
+          const video = serviceRef.current?.getVideoElement();
+          if (video) {
+            console.log('Video element retrieved');
+            setVideoElement(video);
+          }
+        },
+        onDisconnected: () => {
+          console.log('Avatar stream disconnected');
+          setIsConnected(false);
+          setIsSpeaking(false);
+        },
+        onStartTalking: () => {
+          console.log('Avatar started talking');
+          setIsSpeaking(true);
+        },
+        onStopTalking: () => {
+          console.log('Avatar stopped talking');
+          setIsSpeaking(false);
+        },
       });
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to initialize avatar';
+      console.error('Initialization error:', err);
       setError(errorMessage);
       setIsLoading(false);
       setIsConnected(false);

@@ -20,11 +20,12 @@ A web application for practicing counseling skills with an AI-powered client ava
 ### Tech Stack
 
 - **Frontend**: React 18 + TypeScript
-- **Build Tool**: Vite
-- **Avatar**: HeyGen Streaming Avatar SDK
+- **Build Tool**: Vite 5
+- **Avatar**: HeyGen Streaming Avatar SDK v2.1.0
 - **AI**: Claude API (claude-sonnet-4-20250514)
 - **Speech Recognition**: Web Speech API
 - **Recording**: MediaRecorder API with Canvas composition
+- **WebRTC**: LiveKit for real-time streaming
 
 ### Key Components
 
@@ -113,7 +114,7 @@ VITE_CLAUDE_API_KEY=your_claude_api_key_here
 npm run dev
 ```
 
-The application will be available at `http://localhost:3000`
+The application will be available at `http://localhost:5173`
 
 #### Production Build
 
@@ -221,10 +222,24 @@ Communication Style: Low energy, speaks slowly, hopeless outlook
 
 ### Avatar Not Connecting
 
+**"Concurrent limit reached" Error**:
+- **Free tier limitation**: HeyGen free tier has concurrent session limits
+- **Solution**: Wait 10-15 minutes for previous sessions to auto-expire
+- **Check active sessions**: Run `curl -H "x-api-key: YOUR_API_KEY" https://api.heygen.com/v1/streaming.list`
+- **Contact support**: Email support@heygen.com if issue persists
+
+**"Avatar not found" Error**:
+- Your avatar ID may not be a Streaming Avatar
+- Only **Finetune Instant Avatars** and **Studio Avatars** can be used (requires upgrade fee)
+- **For testing**: Use public avatars like `josh_lite3_20230714`, `Angela-inblackskirt-20220820`, or `anna_public_3_20240108`
+- **Check available avatars**: Visit https://app.heygen.com/streaming-avatar
+
+**General troubleshooting**:
 - Verify HeyGen API key is correct
 - Check avatar ID and voice ID are valid
 - Ensure stable internet connection
 - Check browser console for detailed errors
+- Clear browser cache and try incognito mode
 
 ### Speech Recognition Not Working
 
