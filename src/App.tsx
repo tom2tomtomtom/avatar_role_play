@@ -10,6 +10,7 @@ import { useSpeechRecognition } from './hooks/useSpeechRecognition';
 import { useSessionRecording } from './hooks/useSessionRecording';
 import { ClientPersona, ConnectionStatus } from './types';
 import { getApiKeys, DEFAULT_PERSONA, DEFAULT_AVATAR_CONFIG } from './utils/config';
+import { detectEmotionFromText, addNaturalVariation } from './utils/emotionDetector';
 import './App.css';
 
 function App() {
@@ -183,9 +184,12 @@ function App() {
         console.log(`📥 ${ai.aiProvider.toUpperCase()} response received:`, response.substring(0, 200) + '...');
         console.log('📊 Response length:', response.length, 'characters');
 
-        // Make avatar speak the response
-        console.log('🎤 Sending text to avatar to speak...');
-        await avatar.speak(response);
+        // Detect emotion and adjust voice for more realistic delivery
+        const voiceSettings = detectEmotionFromText(response);
+        voiceSettings.rate = addNaturalVariation(voiceSettings.rate);
+        
+        console.log('🎤 Sending text to avatar with voice settings:', voiceSettings);
+        await avatar.speak(response, voiceSettings);
         console.log('✅ Avatar.speak() completed');
       } catch (error) {
         console.error('❌ Failed to process message:', error);

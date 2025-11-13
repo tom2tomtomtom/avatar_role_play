@@ -82,7 +82,10 @@ export const useHeyGenAvatar = (apiKey: string): UseHeyGenAvatarReturn => {
     }
   }, []);
 
-  const speak = useCallback(async (text: string) => {
+  const speak = useCallback(async (
+    text: string,
+    voiceSettings?: { emotion?: string; rate?: number }
+  ) => {
     if (!serviceRef.current || !isConnected) {
       setError('Avatar not connected');
       return;
@@ -90,7 +93,7 @@ export const useHeyGenAvatar = (apiKey: string): UseHeyGenAvatarReturn => {
 
     try {
       // Use REPEAT mode to prevent avatar AI from generating its own responses
-      await serviceRef.current.speak(text, 'repeat' as any);
+      await serviceRef.current.speak(text, 'repeat' as any, voiceSettings);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to speak';
       setError(errorMessage);

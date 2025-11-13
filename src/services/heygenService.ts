@@ -118,7 +118,11 @@ export class HeyGenService {
     }
   }
 
-  async speak(text: string, taskType: TaskType = TaskType.TALK): Promise<void> {
+  async speak(
+    text: string, 
+    taskType: TaskType = TaskType.REPEAT,
+    voiceSettings?: { emotion?: string; rate?: number }
+  ): Promise<void> {
     if (!this.avatar) {
       throw new Error('Avatar not initialized');
     }
@@ -140,14 +144,20 @@ export class HeyGenService {
     }
     
     try {
-      const speakRequest = {
+      const speakRequest: any = {
         text: cleanText,
         taskType,
       };
-      console.log('🎤 Avatar: Sending speak request:', speakRequest);
+      
+      // Add voice settings if provided for more natural expression
+      if (voiceSettings) {
+        speakRequest.voiceSettings = voiceSettings;
+        console.log('🎭 Using voice settings:', voiceSettings);
+      }
+      
+      console.log('🎤 Avatar: Sending speak request');
       
       const result = await this.avatar.speak(speakRequest);
-      console.log('🎤 Avatar: Speak result:', result);
       console.log('🎤 Avatar: Speak command sent successfully');
     } catch (error) {
       console.error('🔴 Avatar: Failed to make avatar speak:', error);
